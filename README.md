@@ -89,25 +89,22 @@ console.log('New player with custom config:', newPlayer);
 
 ### `Interfaces`
 
-```json
+```typescript
 interface Player {  
   rating: number;  
   rd: number;  
   lastPlayedMatch?: Date;  
-  // Add any other player-specific properties  
 }
 
 interface Opponent {  
   rating: number;  
   rd: number;  
-  // Add any other opponent-specific properties  
 }
 
 interface Match {  
   player: Player;  
   opponent: Opponent;  
-  score: number; // 1 for win, 0 for loss, 0.5 for draw  
-  // Add any other match-specific properties  
+  score: number;  
 }
 
 interface GlickoConfig {  
@@ -117,7 +114,6 @@ interface GlickoConfig {
   rdCeiling: number;  
   q: number;  
   daysPerRatingPeriod: number;  
-  // Add any other configurable properties  
 }
 ```
 
