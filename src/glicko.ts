@@ -1,30 +1,10 @@
-interface Player {
-    rating: number;
-    rd: number;
-}
-
-interface Opponent {
-    rating: number;
-    rd: number;
-}
-
-interface GameResult {
-    player: Player;
-    opponent: Opponent;
-    score: number;
-}
-
 /**
- * Calculates the g(RD) function, which dampens the effect of the opponent's RD.
- * @param rd The rating deviation of the opponent.
- * @returns The dampened RD value.
+ * Glicko rating system implementation.
+ * This code calculates the new Glicko rating and rating deviation for a player after a series of games.
+ * The Glicko system is an improvement over the Elo rating system, allowing for more accurate ratings based on the uncertainty of a player's skill level.
+ * The Glicko system uses a rating deviation (RD) to measure the uncertainty in a player's rating.
+ * A lower RD indicates a more stable rating, while a higher RD indicates more uncertainty.
  */
-function g(rd: number): number {
-    return 0
-}
-
-// Constant used in the expected outcome calculation
-const q = Math.log(10) / 400;
 
 /**
  * Calculates the expected outcome of a game between two players.
