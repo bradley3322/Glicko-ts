@@ -71,6 +71,8 @@ You can customize the Glicko system by passing a configuration object to the Gli
 * `rdCeiling`: The maximum value the RD can reach (default: 350).  
 * `q`: The system constant, derived as ln(10) / 400 (default: approximately 0.005756).  
 * `daysPerRatingPeriod`: The assumed average number of days in a rating period, used for inactivity calculation (default: 30).
+* `roundingPrecision`: The number of decimal places to round ratings and RDs to (default: 2).  Must be a non-negative integer.
+
 
 ```typescript
 import { Glicko } from 'glickots';  
@@ -79,7 +81,8 @@ import { GlickoConfig } from 'glickots';
 const customConfig: Partial<GlickoConfig> = {  
   initialRating: 1000,  
   initialRD: 300,  
-  daysPerRatingPeriod: 60,  
+  daysPerRatingPeriod: 60,
+  roundingPrecision: 0,
 };
 
 const glickoWithCustomConfig = new Glicko(customConfig);  
@@ -113,7 +116,8 @@ interface GlickoConfig {
   inactivityConstant: number;  
   rdCeiling: number;  
   q: number;  
-  daysPerRatingPeriod: number;  
+  daysPerRatingPeriod: number;
+  roundingPrecision: number; 
 }
 ```
 
