@@ -117,8 +117,7 @@ interface GlickoConfig {
 ```
 
 ## `License`
-
-ISC  
+ 
 MIT License
 
 Copyright (c) \[2025\] \[Bradley Robinson\]
