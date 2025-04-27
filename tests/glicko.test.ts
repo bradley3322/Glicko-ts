@@ -53,6 +53,38 @@ describe('Glicko Class', () => {
             expect(player.rating).toBeCloseTo(1500, 0);
             expect(player.rd).toBeCloseTo(350, 0);
         });
+
+        it('should throw an error if initialRating is negative', () => {
+            expect(() => new Glicko({ initialRating: -1 })).toThrowError("initialRating must be non-negative.");
+        });
+
+        it('should throw an error if initialRD is negative', () => {
+            expect(() => new Glicko({ initialRD: -1 })).toThrowError("initialRD must be non-negative.");
+        });
+
+        it('should throw an error if inactivityConstant is negative', () => {
+            expect(() => new Glicko({ inactivityConstant: -1 })).toThrowError("inactivityConstant must be non-negative.");
+        });
+
+        it('should throw an error if rdCeiling is negative', () => {
+            expect(() => new Glicko({ rdCeiling: -1 })).toThrowError("rdCeiling must be non-negative.");
+        });
+
+        it('should throw an error if daysPerRatingPeriod is zero', () => { // Changed to zero
+            expect(() => new Glicko({ daysPerRatingPeriod: 0 })).toThrowError("daysPerRatingPeriod must be positive."); //Updated message
+        });
+
+        it('should throw an error if daysPerRatingPeriod is negative', () => {
+            expect(() => new Glicko({ daysPerRatingPeriod: -1 })).toThrowError("daysPerRatingPeriod must be positive.");
+        });
+
+        it('should throw an error if roundingPrecision is negative', () => {
+            expect(() => new Glicko({ roundingPrecision: -1 })).toThrowError("roundingPrecision must be a non-negative integer.");
+        });
+
+        it('should throw an error if roundingPrecision is not an integer', () => {
+            expect(() => new Glicko({ roundingPrecision: 1.5 })).toThrowError("roundingPrecision must be a non-negative integer.");
+        });
     });
 
     describe('initializeNewPlayer', () => {
