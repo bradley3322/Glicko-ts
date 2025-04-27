@@ -18,7 +18,28 @@ export class Glicko {
      * @param config Optional configuration object to override default settings.
      */
     constructor(config?: Partial<GlickoConfig>) {
-        this.config = { ...this.defaultConfig(), ...config };
+        const defaultConfig = this.defaultConfig();
+        this.config = { ...defaultConfig, ...config }; // Apply user overrides
+
+        // Validate the configuration values
+        if (this.config.initialRating < 0) {
+            throw new Error("initialRating must be non-negative.");
+        }
+        if (this.config.initialRD < 0) {
+            throw new Error("initialRD must be non-negative.");
+        }
+        if (this.config.inactivityConstant < 0) {
+            throw new Error("inactivityConstant must be non-negative.");
+        }
+        if (this.config.rdCeiling < 0) {
+            throw new Error("rdCeiling must be non-negative.");
+        }
+        if (this.config.daysPerRatingPeriod <= 0) {
+            throw new Error("daysPerRatingPeriod must be positive.");
+        }
+        if (this.config.roundingPrecision < 0 || !Number.isInteger(this.config.roundingPrecision)) {
+            throw new Error("roundingPrecision must be a non-negative integer.");
+        }
     }
 
     /**
@@ -33,6 +54,7 @@ export class Glicko {
             rdCeiling: 350,
             q: Math.log(10) / 400,
             daysPerRatingPeriod: 30, // Assumed average number of days in a rating period
+            roundingPrecision: 2, // Default rounding precision for ratings and RD
         };
     }
 
@@ -41,7 +63,10 @@ export class Glicko {
      * @returns A new Player object with initial Glicko values.
      */
     initializeNewPlayer(): Player {
-        return { rating: this.config.initialRating, rd: this.config.initialRD };
+        return {
+            rating: MathUtils.roundToDecimalPlaces(this.config.initialRating, this.config.roundingPrecision),
+            rd: MathUtils.roundToDecimalPlaces(this.config.initialRD, this.config.roundingPrecision),
+        };
     }
 
     /**
@@ -58,7 +83,7 @@ export class Glicko {
         }
 
         if (!player.lastPlayedMatch) {
-            return { ...player }; // No last played match recorded, RD remains the same
+            return { ...player, rd: MathUtils.roundToDecimalPlaces(player.rd, this.config.roundingPrecision) }; // No last played match recorded, RD remains the same
         }
 
         const periodsSinceLastActivity = daysSinceLastActive / this.config.daysPerRatingPeriod;
@@ -66,7 +91,7 @@ export class Glicko {
             Math.sqrt(Math.pow(player.rd, 2) + Math.pow(this.config.inactivityConstant, 2) * periodsSinceLastActivity),
             this.config.rdCeiling
         );
-        return { ...player, rd: newRd };
+        return { ...player, rd: MathUtils.roundToDecimalPlaces(newRd, this.config.roundingPrecision) };
     }
 
     /**
@@ -140,7 +165,7 @@ export class Glicko {
      * @returns The new rating.
      */
     updateRating(currentRating: number, delta: number): number {
-        return currentRating + delta;
+        return MathUtils.roundToDecimalPlaces(currentRating + delta, this.config.roundingPrecision);
     }
 
     /**
@@ -159,7 +184,8 @@ export class Glicko {
         if (variance <= 0) {
             throw new Error("Variance must be positive.");
         }
-        return Math.sqrt(1 / (1 / Math.pow(initialRd, 2) + 1 / variance));
+        const newRd = Math.sqrt(1 / (1 / Math.pow(initialRd, 2) + 1 / variance));
+        return MathUtils.roundToDecimalPlaces(newRd, this.config.roundingPrecision);
     }
 
     /**
