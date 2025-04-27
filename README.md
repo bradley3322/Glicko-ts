@@ -2,7 +2,7 @@
 
 GlickoTS is a TypeScript implementation of the Glicko rating system, a popular algorithm for calculating the relative skill levels of players in competitive games. This library provides an easy-to-use interface for integrating Glicko ratings into your applications.
 
-\[\!\[License: ISC\](https://img.shields.io/badge/License-ISC-blue.svg)\](https://opensource.org/licenses/ISC)  
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## `Features`
 
@@ -24,8 +24,7 @@ npm install glickots
 Here's a quick example of how to use GlickoTS:
 
 ```typescript
-import { Glicko } from 'glickots';
-import { Player, Match } from 'glickots'; // Import interfaces
+import { Glicko, Player, Match } from 'glickots';
 
 // Initialize the Glicko calculator
 const glicko = new Glicko();
@@ -35,44 +34,40 @@ const playerA: Player = glicko.initializeNewPlayer();
 const playerB: Player = glicko.initializeNewPlayer();
 
 // Simulate a match
-const matchResult: Match = {
-  player: playerA,
-  opponent: { ...playerB, rating: 1600, rd: 200 },
-  score: 1, // 1 for a win, 0 for a loss, 0.5 for a draw
+const match: Match = {
+    player: playerA,
+    opponent: playerB,
+    score: 1, // 1 for a win, 0 for a loss, 0.5 for a draw
 };
 
-// Process game results for player A
-const updatedPlayerA = glicko.processGameResults(playerA, [matchResult]);
-console.log('Updated Player A:', updatedPlayerA);
+// Example 1: Updating RD for inactivity AND processing match results in one step
+// This is the most common and recommended way to use the library
+const updatedPlayerA1 = glicko.processGameResults(playerA, [match], 60);
+console.log('Player A after inactivity and match (combined):', updatedPlayerA1);
 
-// You can process multiple matches at once
-const match2: Match = {
-  player: playerA,
-  opponent: { ...playerB, rating: updatedPlayerA.rating, rd: updatedPlayerA.rd },
-  score: 0.5,
-};
-
-const updatedPlayerAAfterMultipleGames = glicko.processGameResults(updatedPlayerA, [matchResult, match2]);
-console.log('Updated Player A after multiple games:', updatedPlayerAAfterMultipleGames);
-
-// Update RD for inactivity
+// Example 2: Updating RD for inactivity separately, then processing match results
+// This is useful if you need the inactive RD for other purposes.
 const daysInactive = 60;
-const playerAInactive = glicko.updateRDForInactivity(updatedPlayerAAfterMultipleGames, daysInactive);
-console.log('Player A after inactivity:', playerAInactive);
+const playerAInactive = glicko.updateRDForInactivity(playerA, daysInactive); // Update RD due to inactivity
+const updatedPlayerA2 = glicko.processGameResults(playerAInactive, [match]); // Then process match
+console.log('Player A after inactivity and match (separate):', updatedPlayerA2);
+
+// Example 3: Processing match results without considering inactivity
+const updatedPlayerA3 = glicko.processGameResults(playerA, [match]);
+console.log('Player A after match (no inactivity):', updatedPlayerA3);
 ```
 
 ## `Configuration`
 
 You can customize the Glicko system by passing a configuration object to the Glicko constructor. The available configuration options are:
 
-* `initialRating`: The default rating for a new player (default: 1500).  
-* `initialRD`: The default rating deviation for a new player (default: 350).  
-* `inactivityConstant`: A constant used to increase RD over periods of inactivity (default: 0.5).  
-* `rdCeiling`: The maximum value the RD can reach (default: 350).  
-* `q`: The system constant, derived as ln(10) / 400 (default: approximately 0.005756).  
+* `initialRating`: The default rating for a new player (default: 1500).
+* `initialRD`: The default rating deviation for a new player (default: 350).
+* `inactivityConstant`: A constant used to increase RD over periods of inactivity (default: 0.5).
+* `rdCeiling`: The maximum value the RD can reach (default: 350).
+* `q`: The system constant, derived as ln(10) / 400 (default: approximately 0.005756).
 * `daysPerRatingPeriod`: The assumed average number of days in a rating period, used for inactivity calculation (default: 30).
 * `roundingPrecision`: The number of decimal places to round ratings and RDs to (default: 2).  Must be a non-negative integer.
-
 
 ```typescript
 import { Glicko } from 'glickots';  
