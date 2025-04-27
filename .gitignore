@@ -4,7 +4,7 @@ package-lock.json
 npm-debug.log*
 yarn-error.log*
 
-# TypeScript output
+# TypeScript output (redundant with dist, but good to have)
 dist
 build
 
@@ -18,7 +18,18 @@ Thumbs.db
 
 # Test files
 coverage
+tests
 
 # Other temporary files
 *.log
 *.tmp
+
+# TypeScript configuration
+tsconfig.json
+tsconfig.esm.json
+
+# Jest configuration
+jest.config.js
+
+# Source files
+src
