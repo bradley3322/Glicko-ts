@@ -22,7 +22,7 @@
     "games",
     "sports"
   ],
-  "license": "ISC",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bradley3322/GlickoTS.git"
@@ -37,5 +37,13 @@
     "rimraf": "^5.0.5",
     "ts-jest": "^29.3.2",
     "typescript": "^5.8.3"
+  },
+  "exports": {
+    ".": {
+      "require": "./dist/index.js", 
+      "import": "./dist/esm/index.js", 
+      "types": "./dist/index.d.ts"  
+    }
   }
+
 }
