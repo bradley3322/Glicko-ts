@@ -185,7 +185,8 @@ export class Glicko {
             throw new Error("Variance must be positive.");
         }
         const newRd = Math.sqrt(1 / (1 / Math.pow(initialRd, 2) + 1 / variance));
-        return MathUtils.roundToDecimalPlaces(newRd, this.config.roundingPrecision);
+        const roundedRd = MathUtils.roundToDecimalPlaces(newRd, this.config.roundingPrecision);
+        return Math.max(roundedRd, MathUtils.roundToDecimalPlaces(initialRd, this.config.roundingPrecision));
     }
 
     /**
