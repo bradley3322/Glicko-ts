@@ -2,9 +2,13 @@
   "name": "glickots",
   "version": "1.0.0",
   "description": "A TypeScript implementation of the Glicko rating system.",
-  "main": "dist/index.js",
-  "module": "dist/esm/index.js",
-  "types": "dist/index.d.ts",
+  "files": [
+    "dist/index.js",
+    "dist/index.d.ts",
+    "dist/esm/index.js",
+    "dist/esm/index.d.ts",
+    "README.md"
+  ],
   "scripts": {
     "build": "rimraf dist && tsc -p tsconfig.json && tsc -p tsconfig.esm.json",
     "build:cjs": "rimraf dist && tsc -p tsconfig.json",

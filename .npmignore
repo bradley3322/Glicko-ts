@@ -1,35 +1,36 @@
-# Node.js
+# Node.js junk
 node_modules
 package-lock.json
 npm-debug.log*
 yarn-error.log*
 
-# TypeScript output
+# TypeScript build output
 build
 dist/*
-!dist/esm/**
+!dist/index.js
+!dist/index.d.ts
+!dist/esm/index.js
+!dist/esm/index.d.ts
 
-# IDE
+# IDE files
 .vscode/
 .idea/
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
 
-# Test files
+# Test and coverage
 coverage
 tests
 
-# Temporary files
+# Temp files
 *.log
 *.tmp
 
-# TypeScript config
+# Config files you don't want to ship
 tsconfig.json
 tsconfig.esm.json
-
-# Jest config
 jest.config.js
 
 # Source files
