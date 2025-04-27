@@ -4,15 +4,16 @@ package-lock.json
 npm-debug.log*
 yarn-error.log*
 
-# TypeScript output (redundant with dist, but good to have)
-dist
+# TypeScript output
 build
+dist/*
+!dist/esm/**
 
-# IDE specific files
+# IDE
 .vscode/
 .idea/
 
-# OS generated files
+# OS
 .DS_Store
 Thumbs.db
 
@@ -20,15 +21,15 @@ Thumbs.db
 coverage
 tests
 
-# Other temporary files
+# Temporary files
 *.log
 *.tmp
 
-# TypeScript configuration
+# TypeScript config
 tsconfig.json
 tsconfig.esm.json
 
-# Jest configuration
+# Jest config
 jest.config.js
 
 # Source files
