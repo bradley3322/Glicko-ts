@@ -5,4 +5,5 @@ export interface GlickoConfig {
     rdCeiling: number;
     q: number;
     daysPerRatingPeriod: number;
+    roundingPrecision: number; // Optional rounding precision for ratings and RD
 }
