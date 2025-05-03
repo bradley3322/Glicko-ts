@@ -2,11 +2,23 @@
   "name": "glickots",
   "version": "1.0.0",
   "description": "A TypeScript implementation of the Glicko rating system.",
+  "main": "./dist/index.js", 
+  "module": "./dist/esm/index.js", 
+  "types": "./dist/index.d.ts",  
+  "exports": {
+    ".": {
+      "require": { 
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "import": { 
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      }
+    }
+  },
   "files": [
-    "dist/index.js",
-    "dist/index.d.ts",
-    "dist/esm/index.js",
-    "dist/esm/index.d.ts",
+    "dist",
     "README.md"
   ],
   "scripts": {
@@ -41,17 +53,5 @@
     "rimraf": "^5.0.5",
     "ts-jest": "^29.3.2",
     "typescript": "^5.8.3"
-  },
-  "exports": {
-    ".": {
-      "require": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "import": {
-        "types": "./dist/esm/index.d.ts",
-        "default": "./dist/esm/index.js"
-      }
-    }
   }
 }
