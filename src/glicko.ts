@@ -60,12 +60,19 @@ export class Glicko {
 
     /**
      * Initializes a new player with the default rating and rating deviation.
-     * @returns A new Player object with initial Glicko values.
+     * @returns A new Player object with initial Glicko or overrided values.
      */
-    initializeNewPlayer(): Player {
+    initializeNewPlayer(overrides?: Partial<Player>): Player {
         return {
-            rating: MathUtils.roundToDecimalPlaces(this.config.initialRating, this.config.roundingPrecision),
-            rd: MathUtils.roundToDecimalPlaces(this.config.initialRD, this.config.roundingPrecision),
+            rating: MathUtils.roundToDecimalPlaces(
+                overrides?.rating ?? this.config.initialRating,
+                this.config.roundingPrecision
+            ),
+            rd: MathUtils.roundToDecimalPlaces(
+                overrides?.rd ?? this.config.initialRD,
+                this.config.roundingPrecision
+            ),
+            lastPlayedMatch: overrides?.lastPlayedMatch,
         };
     }
 
