@@ -18,12 +18,9 @@
     }
   },
   "files": [
-    "dist/index.js",
-    "dist/index.d.ts",
-    "dist/esm/index.js",
-    "dist/esm/index.d.ts",
-    "README.md"
-  ],
+  "dist",
+  "README.md"
+],
   "scripts": {
     "build": "rimraf dist && tsc -p tsconfig.json && tsc -p tsconfig.esm.json",
     "build:cjs": "rimraf dist && tsc -p tsconfig.json",
