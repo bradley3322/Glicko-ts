@@ -115,28 +115,32 @@ export class Glicko {
     }
 
     /**
-     * Calculates the variance in the player's rating based on the outcomes of a series of matches.
-     * Variance represents the inverse of the information gained about the player's skill.
-     * @param playerRd The current rating deviation of the player.
-     * @param matchs An array of match results for the player.
-     * @returns The calculated variance.
-     * @throws Error if the player's RD is zero or negative.
-     * @throws Error if the match array is empty.
-     */
-    calculateVariance(playerRd: number, matchs: Match[]): number {
-        if (playerRd <= 0) {
-            throw new Error("Player's rating deviation (RD) must be positive.");
-        }
-        if (!matchs || matchs.length === 0) {
-            return 0; // No matches played, no variance to calculate
-        }
+    * Calculates the sum of factors related to the expected variance of match outcomes within a rating period.
+    * This sum quantifies the amount of information gained from the matches played, which influences the change in Rating Deviation (RD).
+    * Formula: sum[ g(opponent_RD)^2 * E * (1-E) ]
+    * A higher value indicates more information was gained, contributing to a larger RD decrease.
+    * @param {number} playerRating Rating of the player at the start of the period.
+    * @param {number} playerRd RD of the player at the start of the period.
+    * @param {Match[]} matchs Matches played during the rating period.
+    * @returns {number} The calculated sum. Returns 0 if matchs is empty/invalid.
+    * @throws {Error} If playerRd is not positive.
+    * @private
+    */
+    private sumMatchVarianceFactors(playerRating: number, playerRd: number, matchs: Match[]): number {
+        if (playerRd <= 0) { throw new Error("Player RD must be positive for calculations."); }
 
         let sum = 0;
         for (const match of matchs) {
-            const expectedOutcome = this.calculateExpectedOutcome(playerRd, match.opponent.rating, match.opponent.rd);
-            sum += Math.pow(MathUtils.g(match.opponent.rd), 2) * expectedOutcome * (1 - expectedOutcome);
+            const opponent = match.opponent;
+            if (opponent.rd <= 0) {
+                console.warn(`Skipping match in variance factor sum due to non-positive opponent RD: ${opponent.rd}`);
+                continue;
+            }
+            const E = this.calculateExpectedOutcome(playerRating, opponent.rating, opponent.rd);
+            const g_opp = MathUtils.g(opponent.rd, this.config.q); // Corrected g function needed
+            sum += Math.pow(g_opp, 2) * E * (1 - E);
         }
-        return 1 / sum;
+        return sum;
     }
 
     /**
