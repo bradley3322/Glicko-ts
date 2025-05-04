@@ -212,26 +212,63 @@ export class Glicko {
     }
 
     /**
-     * Processes a series of match results for a player to update their Glicko rating and RD.
-     * @param player The current state of the player (rating and RD).
-     * @param matchs An array of match results for the player.
-     * @param daysSinceLastActive Optional: The number of days since the player's last rated match.
-     * If provided, the RD will be updated for inactivity before processing matches.
-     * @returns The updated state of the player (new rating and RD).
-     * @throws Error if input parameters are invalid (e.g., negative daysSinceLastActive).
-     */
+    * Processes all matches for a player within a single rating period to update their Glicko-1 rating and RD.
+    * This is the main public method used to calculate rating updates after a set of games representing one period.
+    *
+    * The process involves these steps:
+    * 1. Optionally updates the player's RD based on inactivity since their last known activity.
+    * 2. Calculates intermediate factors based on the match outcomes during the period compared to expectations.
+    * 3. Computes the new RD' based on the RD at the start of the period and the information gained from matches.
+    * 4. Computes the new Rating' based on the rating at the start of the period, the performance during the period, and the new RD'.
+    * 5. Returns the updated player state, including the new rating, new RD (rounded), and an updated `lastPlayedMatch` timestamp.
+    *
+    * @param {Player} player The player's state (rating, RD, lastPlayedMatch) *before* the start of this rating period.
+    * @param {Match[]} matchs An array of all matches the player participated in *during* this rating period.
+    * Each match object should contain the opponent's state (at the time of the match, or start of period)
+    * and the score achieved by the player (e.g., 1=win, 0.5=draw, 0=loss).
+    * @param {number} [daysSinceLastActive] Optional: The number of days that elapsed between the `player.lastPlayedMatch` date
+    * (from the input `player` object) and the *start* of this rating period.
+    * If provided and greater than 0, the player's RD will be updated for
+    * inactivity *before* processing the matches in this period.
+    * @returns {Player} The updated state of the player after processing the rating period, with updated rating, RD,
+    * and `lastPlayedMatch` set to the current time of processing. If no matches are provided
+    * (matchs array is empty or null), it returns the player's state after only the potential
+    * inactivity update (and `lastPlayedMatch` is NOT updated in this case).
+    * @throws {Error} Can throw if internal calculations encounter issues (e.g., non-positive RD input to helpers)
+    * or if `daysSinceLastActive` is negative (via `updateRDForInactivity`).
+    */
     processGameResults(player: Player, matchs: Match[], daysSinceLastActive?: number): Player {
-        let updatedPlayer = { ...player }; // Create a copy to avoid unintended side effects
+        let playerAtPeriodStart = { ...player };
 
-        if (daysSinceLastActive !== undefined) {
-            updatedPlayer = this.updateRDForInactivity(updatedPlayer, daysSinceLastActive);
+        if (daysSinceLastActive !== undefined && daysSinceLastActive > 0) {
+            playerAtPeriodStart = this.updateRDForInactivity(player, daysSinceLastActive);
         }
 
-        const delta = this.calculateRatingChange(updatedPlayer.rating, updatedPlayer.rd, matchs);
-        const variance = this.calculateVariance(updatedPlayer.rd, matchs);
-        const newRd = this.updateRD(updatedPlayer.rd, variance);
-        const newRating = this.updateRating(updatedPlayer.rating, delta);
+        const initialRating = playerAtPeriodStart.rating;
+        const initialRd = playerAtPeriodStart.rd;
 
-        return { rating: newRating, rd: newRd, lastPlayedMatch: new Date() };
+        if (!matchs || matchs.length === 0) {
+            return playerAtPeriodStart;
+        }
+
+        const matchVarianceFactorSum = this.sumMatchVarianceFactors(
+            initialRating, initialRd, matchs
+        );
+
+        const weightedScorePerformanceSum = this.sumWeightedScorePerformance(
+            initialRating, initialRd, matchs
+        );
+
+        const newRdUnrounded = this.calculateNewRD(initialRd, matchVarianceFactorSum);
+
+        const newRatingUnrounded = this.calculateNewRating(
+            initialRating, newRdUnrounded, weightedScorePerformanceSum // Pass the newly computed RD
+        );
+
+        return {
+            rating: MathUtils.roundToDecimalPlaces(newRatingUnrounded, this.config.roundingPrecision),
+            rd: MathUtils.roundToDecimalPlaces(newRdUnrounded, this.config.roundingPrecision),
+            lastPlayedMatch: new Date()
+        };
     }
 }
