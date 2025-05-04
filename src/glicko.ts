@@ -42,10 +42,12 @@ export class Glicko {
             throw new Error("roundingPrecision must be a non-negative integer.");
         }
     }
+
     /**
-     * Returns the default configuration for the Glicko system.
-     * @returns The default Glicko configuration.
-     */
+    * Provides the default configuration values for the Glicko system.
+    * @returns {GlickoConfig} The default configuration.
+    * @private
+    */
     private defaultConfig(): GlickoConfig {
         return {
             initialRating: 1500,
@@ -53,7 +55,7 @@ export class Glicko {
             inactivityConstant: 0.5,
             rdCeiling: 350,
             q: Math.log(10) / 400,
-            daysPerRatingPeriod: 30, // Assumed average number of days in a rating period
+            daysPerRatingPeriod: 30,
             roundingPrecision: 2, // Default rounding precision for ratings and RD
         };
     }
