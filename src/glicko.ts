@@ -20,7 +20,7 @@ export class Glicko {
      */
     constructor(config?: Partial<GlickoConfig>) {
         const defaultConfig = this.defaultConfig();
-        this.config = { ...defaultConfig, ...config }; // Apply user overrides
+        this.config = { ...defaultConfig, ...config };
 
         // Validate the configuration values
         if (this.config.initialRating < 0) {
@@ -137,7 +137,7 @@ export class Glicko {
                 continue;
             }
             const E = this.calculateExpectedOutcome(playerRating, opponent.rating, opponent.rd);
-            const g_opp = MathUtils.g(opponent.rd, this.config.q); // Corrected g function needed
+            const g_opp = MathUtils.g(opponent.rd, this.config.q);
             sum += Math.pow(g_opp, 2) * E * (1 - E);
         }
         return sum;
@@ -168,7 +168,7 @@ export class Glicko {
                 continue;
             }
             const E = this.calculateExpectedOutcome(playerRating, opponent.rating, opponent.rd);
-            const g_opp = MathUtils.g(opponent.rd, this.config.q); // Corrected g function needed
+            const g_opp = MathUtils.g(opponent.rd, this.config.q);
             sum += g_opp * (score - E);
         }
         return sum;
@@ -262,7 +262,7 @@ export class Glicko {
         const newRdUnrounded = this.calculateNewRD(initialRd, matchVarianceFactorSum);
 
         const newRatingUnrounded = this.calculateNewRating(
-            initialRating, newRdUnrounded, weightedScorePerformanceSum // Pass the newly computed RD
+            initialRating, newRdUnrounded, weightedScorePerformanceSum
         );
 
         return {
