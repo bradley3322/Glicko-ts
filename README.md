@@ -1,15 +1,17 @@
 # GlickoTS
 
-GlickoTS is a TypeScript implementation of the Glicko rating system, a popular algorithm for calculating the relative skill levels of players in competitive games. This library provides an easy-to-use interface for integrating Glicko ratings into your applications.
+GlickoTS is a TypeScript implementation of the **Glicko-1** rating system, developed by Mark Glickman. It's a popular algorithm for calculating the relative skill levels of players in competitive games, improving upon simpler systems by incorporating rating reliability. This library provides an easy-to-use interface for integrating Glicko-1 ratings into your applications.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## `Features`
 
-- Fully implemented Glicko rating system in TypeScript.
-- Support for rating updates based on match results.
-- Configurable rating deviation and volatility parameters.
-- Lightweight and easy to integrate.
+-   Implementation of the **Glicko-1** rating algorithm in TypeScript.
+-   Calculates updated Ratings and Rating Deviations (RD) based on match outcomes.
+-   Handles player inactivity via configurable RD increase over time.
+-   Configurable system parameters (initial values, inactivity constant, RD ceiling, etc.).
+-   Provides clear type definitions for easy integration.
+-   Lightweight with zero external dependencies.
 
 ## `Installation`
 
@@ -24,37 +26,71 @@ npm install glickots
 Here's a quick example of how to use GlickoTS:
 
 ```typescript
-import { Glicko, Player, Match } from 'glickots';
+import { Glicko, Player, Match } from 'glickots'; // Adjust path if necessary
 
-// Initialize the Glicko calculator
+// 1. Initialize the Glicko calculator (using default or custom config)
 const glicko = new Glicko();
 
-// Initialize new players
-const playerA: Player = glicko.initializeNewPlayer();
-const playerB: Player = glicko.initializeNewPlayer();
+// 2. Get player states *before* the rating period begins
+// (Assuming these were loaded from your database or previous calculations)
+let playerA: Player = glicko.initializeNewPlayer({ rating: 1500, rd: 200, lastPlayedMatch: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000) }); // Example existing player
+let playerB: Player = glicko.initializeNewPlayer({ rating: 1700, rd: 150, lastPlayedMatch: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) }); // Example existing player
+let playerC: Player = glicko.initializeNewPlayer(); // New player this period
 
-// Simulate a match
-const match: Match = {
-    player: playerA,
-    opponent: playerB,
-    score: 1, // 1 for a win, 0 for a loss, 0.5 for a draw
-};
+console.log('Initial Player A:', playerA);
+console.log('Initial Player B:', playerB);
+console.log('Initial Player C:', playerC);
 
-// Example 1: Updating RD for inactivity AND processing match results in one step
-// This is the most common and recommended way to use the library
-const updatedPlayerA1 = glicko.processGameResults(playerA, [match], 60);
-console.log('Player A after inactivity and match (combined):', updatedPlayerA1);
+// 3. Define matches played *during* this rating period
+// Note: The 'score' is always from the perspective of the 'player' in the Match object.
+// A single game between A and B results in two Match objects, one for each player's perspective.
 
-// Example 2: Updating RD for inactivity separately, then processing match results
-// This is useful if you need the inactive RD for other purposes.
-const daysInactive = 60;
-const playerAInactive = glicko.updateRDForInactivity(playerA, daysInactive); // Update RD due to inactivity
-const updatedPlayerA2 = glicko.processGameResults(playerAInactive, [match]); // Then process match
-console.log('Player A after inactivity and match (separate):', updatedPlayerA2);
+// Assume Player A beat Player C (Score 1 for A, Score 0 for C)
+const matchA_vs_C: Match = { player: playerA, opponent: playerC, score: 1 };
+const matchC_vs_A: Match = { player: playerC, opponent: playerA, score: 0 };
 
-// Example 3: Processing match results without considering inactivity
-const updatedPlayerA3 = glicko.processGameResults(playerA, [match]);
-console.log('Player A after match (no inactivity):', updatedPlayerA3);
+// Assume Player B lost to Player A (Score 0 for B, Score 1 for A - from another match perspective not shown here)
+const matchB_vs_A: Match = { player: playerB, opponent: playerA, score: 0 };
+// Assume Player B beat Player C (Score 1 for B, Score 0 for C)
+const matchB_vs_C: Match = { player: playerB, opponent: playerC, score: 1 };
+const matchC_vs_B: Match = { player: playerC, opponent: playerB, score: 0 };
+
+
+// 4. Collate matches for each player for this period
+const matchesForPlayerA = [matchA_vs_C]; // Add other matches A played here
+const matchesForPlayerB = [matchB_vs_A, matchB_vs_C]; // Add other matches B played here
+const matchesForPlayerC = [matchC_vs_A, matchC_vs_B]; // Add other matches C played here
+
+
+// 5. Calculate inactivity days for each player (time between their last update and the *start* of this period)
+// (This calculation depends on your application's tracking of period start/end times)
+const daysInactiveA = 60; // Example
+const daysInactiveB = 90; // Example
+const daysInactiveC = 0;  // New player, no prior inactivity
+
+
+// 6. Process results for each player
+// This is the standard way: process inactivity and matches in one call.
+const updatedPlayerA = glicko.processGameResults(playerA, matchesForPlayerA, daysInactiveA);
+const updatedPlayerB = glicko.processGameResults(playerB, matchesForPlayerB, daysInactiveB);
+const updatedPlayerC = glicko.processGameResults(playerC, matchesForPlayerC, daysInactiveC); // daysInactiveC is 0, so no inactivity applied
+
+
+// 7. Store the updated player states for the next rating period
+console.log('Updated Player A:', updatedPlayerA);
+console.log('Updated Player B:', updatedPlayerB);
+console.log('Updated Player C:', updatedPlayerC);
+
+/*
+// Alternative Usage Patterns:
+
+// A) Manually applying inactivity first:
+const inactivePlayer = glicko.updateRDForInactivity(player, daysInactive);
+const updatedPlayer = glicko.processGameResults(inactivePlayer, matches); // Note: no daysInactive here
+
+// B) Processing results without considering inactivity:
+const updatedPlayerNoInactivity = glicko.processGameResults(player, matches);
+*/
 ```
 
 ## `Configuration`
@@ -62,27 +98,29 @@ console.log('Player A after match (no inactivity):', updatedPlayerA3);
 You can customize the Glicko system by passing a configuration object to the Glicko constructor. The available configuration options are:
 
 * `initialRating`: The default rating for a new player (default: 1500).
-* `initialRD`: The default rating deviation for a new player (default: 350).
-* `inactivityConstant`: A constant used to increase RD over periods of inactivity (default: 0.5).
-* `rdCeiling`: The maximum value the RD can reach (default: 350).
-* `q`: The system constant, derived as ln(10) / 400 (default: approximately 0.005756).
-* `daysPerRatingPeriod`: The assumed average number of days in a rating period, used for inactivity calculation (default: 30).
-* `roundingPrecision`: The number of decimal places to round ratings and RDs to (default: 2).  Must be a non-negative integer.
+* `initialRD`: The rating deviation assigned to a new player (default: 350). Higher values reflect more uncertainty..
+* `inactivityConstant`: Controls the rate of RD increase during inactivity. Often denoted 'c' (default: 0.5). Needs tuning based on the specific game/skill.
+* `rdCeiling`: The maximum value the RD can reach through inactivity (default: 350). Cannot be lower than initialRD
+* `q`: The Glicko system constant $\ln(10)/400$ is calculated internally and not configurable.
+* `daysPerRatingPeriod`: The typical number of days in your rating cycle. Used to scale the inactivity calculation (default: 30).
+* `roundingPrecision`: The number of decimal places to round final ratings and RDs to (default: 2). Must be a non-negative integer.
 
 ```typescript
-import { Glicko } from 'glickots';  
-import { GlickoConfig } from 'glickots';
+import { Glicko } from 'glickots'; // Adjust path if necessary
+import { GlickoConfig } from 'glickots'; // Adjust path if necessary
 
-const customConfig: Partial<GlickoConfig> = {  
-  initialRating: 1000,  
-  initialRD: 300,  
-  daysPerRatingPeriod: 60,
-  roundingPrecision: 0,
+const customConfig: Partial<GlickoConfig> = {
+  initialRating: 1000,         // Default: 1500
+  initialRD: 250,              // Default: 350
+  inactivityConstant: 0.4,     // Default: 0.5 - Controls how fast RD increases
+  rdCeiling: 300,              // Default: 350 - Maximum RD value
+  daysPerRatingPeriod: 7,      // Default: 30 - Used for inactivity calc scaling
+  roundingPrecision: 0,        // Default: 2 - Decimal places for final results
 };
 
-const glickoWithCustomConfig = new Glicko(customConfig);  
-const newPlayer = glickoWithCustomConfig.initializeNewPlayer();  
-console.log('New player with custom config:', newPlayer);
+const glickoWithCustomConfig = new Glicko(customConfig);
+const newPlayer = glickoWithCustomConfig.initializeNewPlayer();
+console.log('New player with custom config:', newPlayer); // Rating: 1000, RD: 250
 ```
 
 ### `Interfaces`
@@ -142,4 +180,4 @@ SOFTWARE.
 
 ## `Acknowledgments`
 
-The Glicko rating system was developed by Mark Glickman. For more information, visit [glicko.net](http://www.glicko.net/).
+The Glicko(-1) rating system was developed by Mark Glickman. For more information, visit [glicko.net](http://www.glicko.net/).

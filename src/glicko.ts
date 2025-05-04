@@ -21,8 +21,8 @@ export class Glicko {
     constructor(config?: Partial<GlickoConfig>) {
         const defaultConfig = this.defaultConfig();
         this.config = { ...defaultConfig, ...config };
+        this.config.q = defaultConfig.q;
 
-        // Validate the configuration values
         if (this.config.initialRating < 0) {
             throw new Error("initialRating must be non-negative.");
         }
