@@ -175,15 +175,21 @@ export class Glicko {
     }
 
     /**
-     * Updates the player's rating by adding the calculated rating change (delta).
-     * @param currentRating The current rating of the player.
-     * @param delta The calculated change in rating.
-     * @returns The new rating.
-     */
-    updateRating(currentRating: number, delta: number): number {
-        return MathUtils.roundToDecimalPlaces(currentRating + delta, this.config.roundingPrecision);
+      * Calculates the player's new Rating (r') for the end of the rating period.
+      * Determined by initial rating adjusted by overall performance (weightedScorePerformanceSum),
+      * scaled by the system constant (q) and the square of the new RD'.
+      * Formula: r' = r + q * (RD')^2 * weightedScorePerformanceSum
+      * @param {number} initialRating Player's rating at the start of the period.
+      * @param {number} newRd The newly calculated unrounded RD' (output of calculateNewRD).
+      * @param {number} weightedScorePerformanceSum Sum representing performance vs expectation.
+      * @returns {number} The new rating (unrounded).
+      * @private
+      */
+    private calculateNewRating(initialRating: number, newRd: number, weightedScorePerformanceSum: number): number {
+        const newRdSquared = Math.pow(newRd, 2);
+        const ratingChange = this.config.q * newRdSquared * weightedScorePerformanceSum;
+        return initialRating + ratingChange;
     }
-
     /**
      * Updates the player's rating deviation (RD) based on the RD at the beginning of the rating period
      * and the variance calculated from the matches.
