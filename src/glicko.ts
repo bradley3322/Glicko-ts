@@ -144,18 +144,18 @@ export class Glicko {
     }
 
     /**
-  * Calculates the sum of weighted differences between actual match scores and expected scores.
-  * This sum represents overall performance relative to expectation, adjusted for opponent RD.
-  * It's the primary factor determining the rating change direction and magnitude.
-  * Formula: sum[ g(opponent_RD) * (Actual_Score - Expected_Score) ]
-  * A positive sum indicates better-than-expected performance (rating increases); negative indicates worse (rating decreases).
-  * @param {number} playerRating Rating of the player at the start of the period.
-  * @param {number} playerRd RD of the player at the start of the period.
-  * @param {Match[]} matchs Matches played during the rating period.
-  * @returns {number} The calculated sum. Returns 0 if matchs is empty/invalid.
-  * @throws {Error} If playerRd is not positive.
-  * @private
-  */
+     * Calculates the sum of weighted differences between actual match scores and expected scores.
+     * This sum represents overall performance relative to expectation, adjusted for opponent RD.
+     * It's the primary factor determining the rating change direction and magnitude.
+     * Formula: sum[ g(opponent_RD) * (Actual_Score - Expected_Score) ]
+     * A positive sum indicates better-than-expected performance (rating increases); negative indicates worse (rating decreases).
+     * @param {number} playerRating Rating of the player at the start of the period.
+     * @param {number} playerRd RD of the player at the start of the period.
+     * @param {Match[]} matchs Matches played during the rating period.
+     * @returns {number} The calculated sum. Returns 0 if matchs is empty/invalid.
+     * @throws {Error} If playerRd is not positive.
+     * @private
+     */
     sumWeightedScorePerformance(playerRating: number, playerRd: number, matchs: Match[]): number {
         if (playerRd <= 0) { throw new Error("Player RD must be positive for calculations."); }
 
@@ -175,40 +175,40 @@ export class Glicko {
     }
 
     /**
-      * Calculates the player's new Rating (r') for the end of the rating period.
-      * Determined by initial rating adjusted by overall performance (weightedScorePerformanceSum),
-      * scaled by the system constant (q) and the square of the new RD'.
-      * Formula: r' = r + q * (RD')^2 * weightedScorePerformanceSum
-      * @param {number} initialRating Player's rating at the start of the period.
-      * @param {number} newRd The newly calculated unrounded RD' (output of calculateNewRD).
-      * @param {number} weightedScorePerformanceSum Sum representing performance vs expectation.
-      * @returns {number} The new rating (unrounded).
-      * @private
-      */
+    * Calculates the player's new Rating (r') for the end of the rating period.
+    * Determined by initial rating adjusted by overall performance (weightedScorePerformanceSum),
+    * scaled by the system constant (q) and the square of the new RD'.
+    * Formula: r' = r + q * (RD')^2 * weightedScorePerformanceSum
+    * @param {number} initialRating Player's rating at the start of the period.
+    * @param {number} newRd The newly calculated unrounded RD' (output of calculateNewRD).
+    * @param {number} weightedScorePerformanceSum Sum representing performance vs expectation.
+    * @returns {number} The new rating (unrounded).
+    * @private
+    */
     private calculateNewRating(initialRating: number, newRd: number, weightedScorePerformanceSum: number): number {
         const newRdSquared = Math.pow(newRd, 2);
         const ratingChange = this.config.q * newRdSquared * weightedScorePerformanceSum;
         return initialRating + ratingChange;
     }
+
     /**
-     * Updates the player's rating deviation (RD) based on the RD at the beginning of the rating period
-     * and the variance calculated from the matches.
-     * @param initialRd The rating deviation of the player at the beginning of the rating period.
-     * @param variance The calculated variance from the matches.
-     * @returns The new rating deviation.
-     * @throws Error if the initial RD is zero or negative.
-     * @throws Error if the variance is zero or negative.
-     */
-    updateRD(initialRd: number, variance: number): number {
-        if (initialRd <= 0) {
-            throw new Error("Initial rating deviation (RD) must be positive.");
-        }
-        if (variance <= 0) {
-            throw new Error("Variance must be positive.");
-        }
-        const newRd = Math.sqrt(1 / (1 / Math.pow(initialRd, 2) + 1 / variance));
-        const roundedRd = MathUtils.roundToDecimalPlaces(newRd, this.config.roundingPrecision);
-        return Math.max(roundedRd, MathUtils.roundToDecimalPlaces(initialRd, this.config.roundingPrecision));
+    * Calculates the player's new Rating Deviation (RD') for the end of the rating period.
+    * Determined by initial RD and information gained from matches (matchVarianceFactorSum). More information leads to a lower RD.
+    * Formula: RD' = 1 / sqrt( 1/RD^2 + q^2 * matchVarianceFactorSum )
+    * @param {number} initialRd Player's RD at the start of the period.
+    * @param {number} matchVarianceFactorSum Sum quantifying information gain from matches.
+    * @returns {number} The new rating deviation (unrounded). Returns initialRd if no info gained.
+    * @throws {Error} If initialRd is not positive.
+    * @private
+    */
+    private calculateNewRD(initialRd: number, matchVarianceFactorSum: number): number {
+        if (initialRd <= 0) { throw new Error("Initial RD must be positive."); }
+        if (matchVarianceFactorSum <= 0) { return initialRd; }
+        const qSquared = Math.pow(this.config.q, 2);
+        const initialRdSquaredInverse = 1 / Math.pow(initialRd, 2);
+        const dSquaredInverse = qSquared * matchVarianceFactorSum;
+        const newRdSquared = 1 / (initialRdSquaredInverse + dSquaredInverse);
+        return Math.sqrt(newRdSquared);
     }
 
     /**
