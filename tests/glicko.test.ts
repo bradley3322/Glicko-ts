@@ -212,6 +212,7 @@ describe('Glicko Class', () => {
             expect(updatedPlayerNoMatches.rd).toBe(initialPlayer.rd);
             expect(updatedPlayerNoMatches.lastPlayedMatch).toBeUndefined();
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const updatedPlayerNullMatches = glicko.processGameResults(initialPlayer, null as any);
             expect(updatedPlayerNullMatches.rating).toBe(initialPlayer.rating);
             expect(updatedPlayerNullMatches.rd).toBe(initialPlayer.rd);
