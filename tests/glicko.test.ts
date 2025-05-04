@@ -70,8 +70,8 @@ describe('Glicko Class', () => {
             expect(() => new Glicko({ rdCeiling: -1 })).toThrowError("rdCeiling must be non-negative.");
         });
 
-        it('should throw an error if daysPerRatingPeriod is zero', () => { // Changed to zero
-            expect(() => new Glicko({ daysPerRatingPeriod: 0 })).toThrowError("daysPerRatingPeriod must be positive."); //Updated message
+        it('should throw an error if daysPerRatingPeriod is zero', () => {
+            expect(() => new Glicko({ daysPerRatingPeriod: 0 })).toThrowError("daysPerRatingPeriod must be positive.");
         });
 
         it('should throw an error if daysPerRatingPeriod is negative', () => {
@@ -131,143 +131,279 @@ describe('Glicko Class', () => {
 
     });
 
-    describe('calculateExpectedOutcome', () => {
-        it('should calculate expected outcome correctly', () => {
-            const glicko = new Glicko();
-            const playerRating = 1500;
-            const opponentRating = 1600;
-            const opponentRd = 200;
-            const expectedOutcome = glicko.calculateExpectedOutcome(playerRating, opponentRating, opponentRd);
-            const calculatedOutcome = glicko.calculateExpectedOutcome(playerRating, opponentRating, opponentRd);
-            expect(calculatedOutcome).toBeCloseTo(expectedOutcome, 8);
-        });
-
-    });
-
-    describe('calculateVariance', () => {
-        it('should throw an error if playerRd is zero or negative', () => {
-            expect(() => glicko.calculateVariance(0, [])).toThrowError("Player's rating deviation (RD) must be positive.");
-            expect(() => glicko.calculateVariance(-10, [])).toThrowError("Player's rating deviation (RD) must be positive.");
-        });
-
-        it('should return 0 if the match array is empty', () => {
-            const variance = glicko.calculateVariance(100, []);
-            expect(variance).toBe(0);
-        });
-
-        it('should calculate variance correctly', () => {
-            const playerRd = 100;
-            const matchs: Match[] = [
-                { player: { rating: 1500, rd: 100 }, opponent: { rating: 1600, rd: 200 }, score: 1, datePlayed: new Date() },
-                { player: { rating: 1500, rd: 100 }, opponent: { rating: 1400, rd: 150 }, score: 0, datePlayed: new Date() },
-            ];
-
-            const expectedVariance = 1 / (
-                Math.pow(glicko['config'].q * MathUtils.g(200), 2) * glicko.calculateExpectedOutcome(1500, 1600, 200) * (1 - glicko.calculateExpectedOutcome(1500, 1600, 200)) +
-                Math.pow(glicko['config'].q * MathUtils.g(150), 2) * glicko.calculateExpectedOutcome(1500, 1400, 150) * (1 - glicko.calculateExpectedOutcome(1500, 1400, 150))
-            );
-            const variance = glicko.calculateVariance(playerRd, matchs);
-            expect(variance).toBeCloseTo(variance, 8);
-        });
-    });
-
-    describe('calculateRatingChange', () => {
-        it('should throw an error if playerRd is zero or negative', () => {
-            expect(() => glicko.calculateRatingChange(1500, 0, [])).toThrowError("Player's rating deviation (RD) must be positive.");
-            expect(() => glicko.calculateRatingChange(1500, -10, [])).toThrowError("Player's rating deviation (RD) must be positive.");
-        });
-
-        it('should return 0 if the match array is empty', () => {
-            const ratingChange = glicko.calculateRatingChange(1500, 100, []);
-            expect(ratingChange).toBe(0);
-        });
-
-        it('should calculate rating change correctly', () => {
-            const playerRating = 1500;
-            const playerRd = 100;
-            const matchs: Match[] = [
-                { player: { rating: 1500, rd: 100 }, opponent: { rating: 1600, rd: 200 }, score: 1, datePlayed: new Date() },
-                { player: { rating: 1500, rd: 100 }, opponent: { rating: 1400, rd: 150 }, score: 0, datePlayed: new Date() },
-            ];
-            const expectedOutcome1 = glicko.calculateExpectedOutcome(playerRating, 1600, 200);
-            const expectedOutcome2 = glicko.calculateExpectedOutcome(playerRating, 1400, 150);
-
-            const expectedRatingChange = glicko['config'].q * (
-                MathUtils.g(200) * (1 - expectedOutcome1) +
-                MathUtils.g(150) * (0 - expectedOutcome2)
-            );
-
-            const ratingChange = glicko.calculateRatingChange(playerRating, playerRd, matchs);
-            expect(ratingChange).toBeCloseTo(ratingChange, 8);
-        });
-    });
-
-    describe('updateRating', () => {
-        it('should update rating correctly', () => {
-            const currentRating = 1500;
-            const delta = 25.34;
-            const newRating = glicko.updateRating(currentRating, delta);
-            expect(newRating).toBeCloseTo(1525.34, 2);
-        });
-    });
-
-    describe('updateRD', () => {
-        it('should throw an error if initialRd is zero or negative', () => {
-            expect(() => glicko.updateRD(0, 0.06)).toThrowError("Initial rating deviation (RD) must be positive.");
-            expect(() => glicko.updateRD(-10, 0.06)).toThrowError("Initial rating deviation (RD) must be positive.");
-        });
-
-        it('should throw an error if variance is zero or negative', () => {
-            expect(() => glicko.updateRD(100, 0)).toThrowError("Variance must be positive.");
-            expect(() => glicko.updateRD(100, -0.06)).toThrowError("Variance must be positive.");
-        });
-
-        it('should update RD correctly', () => {
-            const glicko = new Glicko();
-            const initialRd = 100;
-            const variance = 0.06;
-            const expectedRD = Math.sqrt(1 / (1 / Math.pow(initialRd, 2) + 1 / variance));
-            const roundedExpectedRD = MathUtils.roundToDecimalPlaces(expectedRD, glicko['config'].roundingPrecision);
-            const expected = Math.max(roundedExpectedRD, MathUtils.roundToDecimalPlaces(initialRd, glicko['config'].roundingPrecision));
-            const newRd = glicko.updateRD(initialRd, variance);
-            expect(newRd).toBeCloseTo(expected, 2);
-        });
-
-    });
 
     describe('processGameResults', () => {
-        it('should process game results correctly without inactivity', () => {
-            const player: Player = glicko.initializeNewPlayer();
-            const matchs: Match[] = [
-                { player: player, opponent: { rating: 1600, rd: 200 }, score: 1, datePlayed: new Date() },
+        it('should calculate results correctly for Case 1 (224 vs 406, B wins)', () => {
+            const glicko = new Glicko();
+            const playerA_initial: Player = { rating: 224, rd: 350 };
+            const playerB_initial: Player = { rating: 406, rd: 350 };
+
+            const matchesForA: Match[] = [
+                { player: playerA_initial, opponent: playerB_initial, score: 0, datePlayed: new Date() }
+            ];
+            const matchesForB: Match[] = [
+                { player: playerB_initial, opponent: playerA_initial, score: 1, datePlayed: new Date() }
             ];
 
-            const delta = glicko.calculateRatingChange(player.rating, player.rd, matchs);
-            const variance = glicko.calculateVariance(player.rd, matchs);
-            const expectedNewRating = glicko.updateRating(player.rating, delta);
-            const expectedNewRd = glicko.updateRD(player.rd, variance);
-            const updatedPlayer = glicko.processGameResults(player, matchs);
+            const playerA_updated = glicko.processGameResults(playerA_initial, matchesForA);
+            expect(playerA_updated.rating).toBeCloseTo(112.47, 2);
+            expect(playerA_updated.rd).toBeCloseTo(295.51, 2);
+            expect(playerA_updated.lastPlayedMatch).toBeInstanceOf(Date);
 
-            expect(updatedPlayer.rating).toBeCloseTo(expectedNewRating, 2);
-            expect(updatedPlayer.rd).toBeCloseTo(expectedNewRd, 2);
-            expect(updatedPlayer.lastPlayedMatch).toBeInstanceOf(Date);
+            const playerB_updated = glicko.processGameResults(playerB_initial, matchesForB);
+            expect(playerB_updated.rating).toBeCloseTo(517.53, 2);
+            expect(playerB_updated.rd).toBeCloseTo(295.51, 2);
+            expect(playerB_updated.lastPlayedMatch).toBeInstanceOf(Date);
         });
 
-        it('should process game results correctly with inactivity', () => {
-            const player: Player = glicko.initializeNewPlayer();
-            const matchs: Match[] = [
-                { player: player, opponent: { rating: 1600, rd: 200 }, score: 1, datePlayed: new Date() },
+        it('should calculate results correctly for Case 2 (1100 vs 1500, B wins)', () => {
+            const glicko = new Glicko();
+            const playerA_initial: Player = { rating: 1100, rd: 350 };
+            const playerB_initial: Player = { rating: 1500, rd: 350 };
+
+            const matchesForA: Match[] = [
+                { player: playerA_initial, opponent: playerB_initial, score: 0, datePlayed: new Date() }
             ];
+            const matchesForB: Match[] = [
+                { player: playerB_initial, opponent: playerA_initial, score: 1, datePlayed: new Date() }
+            ];
+
+            const playerA_updated = glicko.processGameResults(playerA_initial, matchesForA);
+            expect(playerA_updated.rating).toBeCloseTo(1034.14, 2);
+            expect(playerA_updated.rd).toBeCloseTo(311.30, 2);
+            expect(playerA_updated.lastPlayedMatch).toBeInstanceOf(Date);
+
+            const playerB_updated = glicko.processGameResults(playerB_initial, matchesForB);
+            expect(playerB_updated.rating).toBeCloseTo(1565.86, 2);
+            expect(playerB_updated.rd).toBeCloseTo(311.30, 2);
+            expect(playerB_updated.lastPlayedMatch).toBeInstanceOf(Date);
+        });
+
+        it('should process game results correctly *with* inactivity', () => {
+            const glicko = new Glicko();
+            const playerA_before_inactivity: Player = {
+                rating: 1034.14,
+                rd: 311.30,
+                lastPlayedMatch: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000)
+            };
+            const playerC_opponent: Player = { rating: 1200, rd: 150 };
+
+            const matchesForA: Match[] = [
+                { player: playerA_before_inactivity, opponent: playerC_opponent, score: 1, datePlayed: new Date() }
+            ];
+            const daysInactive = 60;
+
+            const EXPECTED_FINAL_RATING = 1263.13;
+            const EXPECTED_FINAL_RD = 250.32;
+
+            const playerA_updated = glicko.processGameResults(playerA_before_inactivity, matchesForA, daysInactive);
+
+            expect(playerA_updated.rating).toBeCloseTo(EXPECTED_FINAL_RATING, 2);
+            expect(playerA_updated.rd).toBeCloseTo(EXPECTED_FINAL_RD, 2);
+            expect(playerA_updated.lastPlayedMatch).toBeInstanceOf(Date);
+        });
+
+        it('should return the player unchanged (except for inactivity update) if no matches are provided', () => {
+            const glicko = new Glicko();
+            const initialPlayer: Player = { rating: 1600, rd: 150, lastPlayedMatch: undefined };
+
+            const updatedPlayerNoMatches = glicko.processGameResults(initialPlayer, []);
+            expect(updatedPlayerNoMatches.rating).toBe(initialPlayer.rating);
+            expect(updatedPlayerNoMatches.rd).toBe(initialPlayer.rd);
+            expect(updatedPlayerNoMatches.lastPlayedMatch).toBeUndefined();
+
+            const updatedPlayerNullMatches = glicko.processGameResults(initialPlayer, null as any);
+            expect(updatedPlayerNullMatches.rating).toBe(initialPlayer.rating);
+            expect(updatedPlayerNullMatches.rd).toBe(initialPlayer.rd);
+            expect(updatedPlayerNullMatches.lastPlayedMatch).toBeUndefined();
+
+            const playerWithLastPlayed: Player = { rating: 1600, rd: 150, lastPlayedMatch: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) };
             const daysInactive = 30;
-            const inactivePlayer = glicko.updateRDForInactivity(player, daysInactive);
-            const delta = glicko.calculateRatingChange(inactivePlayer.rating, inactivePlayer.rd, matchs);
-            const variance = glicko.calculateVariance(inactivePlayer.rd, matchs);
-            const expectedNewRating = glicko.updateRating(inactivePlayer.rating, delta);
-            const expectedNewRd = glicko.updateRD(inactivePlayer.rd, variance);
-            const updatedPlayer = glicko.processGameResults(player, matchs, daysInactive);
-            expect(updatedPlayer.rating).toBeCloseTo(expectedNewRating, 2);
-            expect(updatedPlayer.rd).toBeCloseTo(expectedNewRd, 2);
-            expect(updatedPlayer.lastPlayedMatch).toBeInstanceOf(Date);
+            const playerAfterInactivity = glicko.updateRDForInactivity(playerWithLastPlayed, daysInactive);
+
+            const updatedPlayerWithInactivity = glicko.processGameResults(playerWithLastPlayed, [], daysInactive);
+            expect(updatedPlayerWithInactivity.rating).toBe(playerWithLastPlayed.rating);
+            expect(updatedPlayerWithInactivity.rd).toBeCloseTo(playerAfterInactivity.rd, 2);
+            expect(updatedPlayerWithInactivity.lastPlayedMatch).toEqual(playerWithLastPlayed.lastPlayedMatch);
+        });
+
+    });
+
+    describe('sumMatchVarianceFactors', () => {
+        let glicko: Glicko;
+        const playerRating = 1500;
+        const playerRd = 200;
+        const opponent1: Player = { rating: 1400, rd: 30 };
+        const opponentInvalidRd: Player = { rating: 1600, rd: 0 };
+
+        beforeEach(() => {
+            glicko = new Glicko();
+        });
+
+        it('should throw an error if player RD is zero or negative', () => {
+            const matches: Match[] = [{ player: { rating: playerRating, rd: 0 }, opponent: opponent1, score: 1, datePlayed: new Date() }];
+            expect(() => glicko['sumMatchVarianceFactors'](playerRating, 0, matches))
+                .toThrow("Player RD must be positive for calculations.");
+
+            const matchesNegative: Match[] = [{ player: { rating: playerRating, rd: -50 }, opponent: opponent1, score: 1, datePlayed: new Date() }];
+            expect(() => glicko['sumMatchVarianceFactors'](playerRating, -50, matchesNegative))
+                .toThrow("Player RD must be positive for calculations.");
+        });
+
+        it('should skip matches with non-positive opponent RD and issue a warning', () => {
+            const matches: Match[] = [
+                { player: { rating: playerRating, rd: playerRd }, opponent: opponent1, score: 1, datePlayed: new Date() },
+                { player: { rating: playerRating, rd: playerRd }, opponent: opponentInvalidRd, score: 0, datePlayed: new Date() },
+            ];
+
+            const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+            const q = glicko['config'].q;
+            const g_opp1 = MathUtils.g(opponent1.rd, q);
+            const E1 = glicko['calculateExpectedOutcome'](playerRating, opponent1.rating, opponent1.rd);
+            const expectedSum = Math.pow(g_opp1, 2) * E1 * (1 - E1);
+
+            const result = glicko['sumMatchVarianceFactors'](playerRating, playerRd, matches);
+
+            expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+            expect(consoleWarnSpy).toHaveBeenCalledWith(`Skipping match in variance factor sum due to non-positive opponent RD: ${opponentInvalidRd.rd}`);
+            expect(result).toBeCloseTo(expectedSum, 8);
+
+            consoleWarnSpy.mockRestore();
+        });
+
+    });
+
+    describe('sumWeightedScorePerformance', () => {
+        let glicko: Glicko;
+        const playerRating = 1500;
+        const playerRd = 200;
+        const opponent1: Player = { rating: 1400, rd: 30 };
+        const opponent2: Player = { rating: 1600, rd: 50 };
+        const opponentInvalidRd: Player = { rating: 1700, rd: 0 };
+
+        beforeEach(() => {
+            glicko = new Glicko();
+        });
+
+        it('should throw an error if player RD is zero or negative', () => {
+            const matches: Match[] = [{ player: { rating: playerRating, rd: 0 }, opponent: opponent1, score: 1, datePlayed: new Date() }];
+            expect(() => glicko['sumWeightedScorePerformance'](playerRating, 0, matches))
+                .toThrow("Player RD must be positive for calculations.");
+
+            const matchesNegative: Match[] = [{ player: { rating: playerRating, rd: -50 }, opponent: opponent1, score: 1, datePlayed: new Date() }];
+            expect(() => glicko['sumWeightedScorePerformance'](playerRating, -50, matchesNegative))
+                .toThrow("Player RD must be positive for calculations.");
+        });
+
+        it('should calculate the sum correctly for valid matches', () => {
+            const matches: Match[] = [
+                { player: { rating: playerRating, rd: playerRd }, opponent: opponent1, score: 1, datePlayed: new Date() },
+                { player: { rating: playerRating, rd: playerRd }, opponent: opponent2, score: 0, datePlayed: new Date() },
+            ];
+
+            const q = glicko['config'].q;
+            const g_opp1 = MathUtils.g(opponent1.rd, q);
+            const E1 = glicko['calculateExpectedOutcome'](playerRating, opponent1.rating, opponent1.rd);
+            const term1 = g_opp1 * (1 - E1);
+
+            const g_opp2 = MathUtils.g(opponent2.rd, q);
+            const E2 = glicko['calculateExpectedOutcome'](playerRating, opponent2.rating, opponent2.rd);
+            const term2 = g_opp2 * (0 - E2);
+
+            const expectedSum = term1 + term2;
+            const result = glicko['sumWeightedScorePerformance'](playerRating, playerRd, matches);
+            expect(result).toBeCloseTo(expectedSum, 8);
+        });
+
+        it('should skip matches with non-positive opponent RD and issue a warning (lines 169-172)', () => {
+            const matches: Match[] = [
+                { player: { rating: playerRating, rd: playerRd }, opponent: opponent1, score: 1, datePlayed: new Date() },
+                { player: { rating: playerRating, rd: playerRd }, opponent: opponentInvalidRd, score: 0.5, datePlayed: new Date() },
+            ];
+
+            const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+            const q = glicko['config'].q;
+            const g_opp1 = MathUtils.g(opponent1.rd, q);
+            const E1 = glicko['calculateExpectedOutcome'](playerRating, opponent1.rating, opponent1.rd);
+            const expectedSum = g_opp1 * (1 - E1);
+
+            const result = glicko['sumWeightedScorePerformance'](playerRating, playerRd, matches);
+
+            expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+            expect(consoleWarnSpy).toHaveBeenCalledWith(`Skipping match in weighted score sum due to non-positive opponent RD: ${opponentInvalidRd.rd}`);
+            expect(result).toBeCloseTo(expectedSum, 8);
+
+            consoleWarnSpy.mockRestore();
         });
     });
-});
+
+    describe('calculateNewRating (private)', () => {
+        let glicko: Glicko;
+        const initialRating = 1500;
+        const newRd = 180.5;
+        const q = Math.log(10) / 400;
+
+        beforeEach(() => {
+            glicko = new Glicko();
+        });
+
+        it('should calculate new rating correctly for positive performance sum (lines 208-209)', () => {
+            const weightedScorePerformanceSum = 0.5;
+            const expectedRating = initialRating + q * Math.pow(newRd, 2) * weightedScorePerformanceSum;
+            const result = glicko['calculateNewRating'](initialRating, newRd, weightedScorePerformanceSum);
+            expect(result).toBeCloseTo(expectedRating, 8);
+        });
+
+        it('should calculate new rating correctly for negative performance sum (lines 208-209)', () => {
+            const weightedScorePerformanceSum = -0.2;
+            const expectedRating = initialRating + q * Math.pow(newRd, 2) * weightedScorePerformanceSum;
+            const result = glicko['calculateNewRating'](initialRating, newRd, weightedScorePerformanceSum);
+            expect(result).toBeCloseTo(expectedRating, 8);
+        });
+
+        it('should calculate new rating correctly for zero performance sum (lines 208-209)', () => {
+            const weightedScorePerformanceSum = 0;
+            const expectedRating = initialRating;
+            const result = glicko['calculateNewRating'](initialRating, newRd, weightedScorePerformanceSum);
+            expect(result).toBeCloseTo(expectedRating, 8);
+        });
+    });
+
+    describe('calculateNewRD (private)', () => {
+        let glicko: Glicko;
+        const initialRd = 200;
+        const q = Math.log(10) / 400;
+
+        beforeEach(() => {
+            glicko = new Glicko();
+        });
+
+        it('should calculate new RD correctly for positive variance sum (lines 253-255)', () => {
+            const matchVarianceFactorSum = 0.8;
+            const expectedRd = 1 / Math.sqrt(1 / Math.pow(initialRd, 2) + Math.pow(q, 2) * matchVarianceFactorSum);
+            const result = glicko['calculateNewRD'](initialRd, matchVarianceFactorSum);
+            expect(result).toBeCloseTo(expectedRd, 8);
+            expect(result).toBeLessThan(initialRd);
+        });
+
+        it('should return initial RD if variance sum is zero or negative (line 254)', () => {
+            let matchVarianceFactorSum = 0;
+            let result = glicko['calculateNewRD'](initialRd, matchVarianceFactorSum);
+            expect(result).toBe(initialRd);
+
+            matchVarianceFactorSum = -0.5;
+            result = glicko['calculateNewRD'](initialRd, matchVarianceFactorSum);
+            expect(result).toBe(initialRd);
+        });
+
+
+        it('should throw an error if initial RD is zero or negative (line 253)', () => {
+            expect(() => glicko['calculateNewRD'](0, 0.8))
+                .toThrow("Initial RD must be positive.");
+            expect(() => glicko['calculateNewRD'](-50, 0.8))
+                .toThrow("Initial RD must be positive.");
+        });
+    });
+})
