@@ -80,22 +80,16 @@ export class Glicko {
     }
 
     /**
-     * Updates a player's rating deviation (RD) based on the time since their last played match.
-     * The RD increases to reflect the growing uncertainty in the player's skill due to inactivity.
-     * @param player The player object to update.
-     * @param daysSinceLastActive The number of days since the player's last rated match.
-     * @returns A new Player object with the updated RD.
-     * @throws Error if daysSinceLastActive is negative.
-     */
+  * Updates a player's Rating Deviation (RD) based on inactivity.
+  * RD increases towards a ceiling over time if the player hasn't played.
+  * @param {Player} player The player's state *before* the inactivity period.
+  * @param {number} daysSinceLastActive The number of days since the player's last rated match.
+  * @returns {Player} A new Player object with the potentially updated RD.
+  * @throws {Error} If daysSinceLastActive is negative.
+  */
     updateRDForInactivity(player: Player, daysSinceLastActive: number): Player {
-        if (daysSinceLastActive < 0) {
-            throw new Error("Days since last active cannot be negative.");
-        }
-
-        if (!player.lastPlayedMatch) {
-            return { ...player, rd: MathUtils.roundToDecimalPlaces(player.rd, this.config.roundingPrecision) }; // No last played match recorded, RD remains the same
-        }
-
+        if (daysSinceLastActive < 0) { throw new Error("Days since last active cannot be negative."); }
+        if (!player.lastPlayedMatch) { return { ...player }; }
         const periodsSinceLastActivity = daysSinceLastActive / this.config.daysPerRatingPeriod;
         const newRd = Math.min(
             Math.sqrt(Math.pow(player.rd, 2) + Math.pow(this.config.inactivityConstant, 2) * periodsSinceLastActivity),
