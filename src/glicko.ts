@@ -144,30 +144,34 @@ export class Glicko {
     }
 
     /**
-     * Calculates the change (delta) in the player's rating based on the actual outcomes of a series of matches
-     * compared to the expected outcomes.
-     * @param playerRating The current rating of the player.
-     * @param playerRd The current rating deviation of the player.
-     * @param matchs An array of match results for the player.
-     * @returns The calculated rating change (delta).
-     * @throws Error if the player's RD is zero or negative.
-     * @throws Error if the match array is empty.
-     */
-    calculateRatingChange(playerRating: number, playerRd: number, matchs: Match[]): number {
-        if (playerRd <= 0) {
-            throw new Error("Player's rating deviation (RD) must be positive.");
-        }
-        if (!matchs || matchs.length === 0) {
-            return 0; // No matches played, no rating change
-        }
+  * Calculates the sum of weighted differences between actual match scores and expected scores.
+  * This sum represents overall performance relative to expectation, adjusted for opponent RD.
+  * It's the primary factor determining the rating change direction and magnitude.
+  * Formula: sum[ g(opponent_RD) * (Actual_Score - Expected_Score) ]
+  * A positive sum indicates better-than-expected performance (rating increases); negative indicates worse (rating decreases).
+  * @param {number} playerRating Rating of the player at the start of the period.
+  * @param {number} playerRd RD of the player at the start of the period.
+  * @param {Match[]} matchs Matches played during the rating period.
+  * @returns {number} The calculated sum. Returns 0 if matchs is empty/invalid.
+  * @throws {Error} If playerRd is not positive.
+  * @private
+  */
+    sumWeightedScorePerformance(playerRating: number, playerRd: number, matchs: Match[]): number {
+        if (playerRd <= 0) { throw new Error("Player RD must be positive for calculations."); }
 
         let sum = 0;
         for (const match of matchs) {
-            const expectedOutcome = this.calculateExpectedOutcome(playerRating, match.opponent.rating, match.opponent.rd);
-            sum += MathUtils.g(match.opponent.rd) * (match.score - expectedOutcome);
+            const opponent = match.opponent;
+            const score = match.score;
+            if (opponent.rd <= 0) {
+                console.warn(`Skipping match in weighted score sum due to non-positive opponent RD: ${opponent.rd}`);
+                continue;
+            }
+            const E = this.calculateExpectedOutcome(playerRating, opponent.rating, opponent.rd);
+            const g_opp = MathUtils.g(opponent.rd, this.config.q); // Corrected g function needed
+            sum += g_opp * (score - E);
         }
-        const variance = this.calculateVariance(playerRd, matchs);
-        return variance * sum;
+        return sum;
     }
 
     /**
