@@ -13,9 +13,10 @@ import { GlickoConfig } from './config/glicko_config';
 export class Glicko {
     private config: GlickoConfig;
 
+
     /**
-     * Constructor for the Glicko rating system.
-     * @param config Optional configuration object to override default settings.
+     * Creates an instance of the Glicko rating system calculator.
+     * @param {Partial<GlickoConfig>} [config] Optional configuration settings.
      */
     constructor(config?: Partial<GlickoConfig>) {
         const defaultConfig = this.defaultConfig();
@@ -41,7 +42,6 @@ export class Glicko {
             throw new Error("roundingPrecision must be a non-negative integer.");
         }
     }
-
     /**
      * Returns the default configuration for the Glicko system.
      * @returns The default Glicko configuration.
