@@ -61,9 +61,10 @@ export class Glicko {
     }
 
     /**
-     * Initializes a new player with the default rating and rating deviation.
-     * @returns A new Player object with initial Glicko or overrided values.
-     */
+   * Creates a new Player object with initial or overridden rating/RD values.
+   * @param {Partial<Player>} [overrides] Optional values to override defaults.
+   * @returns {Player} A new Player object.
+   */
     initializeNewPlayer(overrides?: Partial<Player>): Player {
         return {
             rating: MathUtils.roundToDecimalPlaces(
