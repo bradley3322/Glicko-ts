@@ -4,8 +4,9 @@ export class MathUtils {
      * @param rd The rating deviation of the opponent.
      * @returns The dampened RD value.
      */
-    static g(rd: number): number {
-        return 1 / Math.sqrt(1 + 3 * Math.pow(rd / Math.PI, 2));
+    static g(rd: number, q: number): number {
+        const term = 3 * Math.pow(q, 2) * Math.pow(rd, 2) / Math.pow(Math.PI, 2);
+        return 1 / Math.sqrt(1 + term);
     }
 
     /**
