@@ -99,15 +99,19 @@ export class Glicko {
     }
 
     /**
-     * Calculates the expected outcome (probability of winning) of a match for the player.
-     * This is based on the Glicko ratings and rating deviations of the player and the opponent.
-     * @param playerRating The rating of the player.
-     * @param opponentRating The rating of the opponent.
-     * @param opponentRd The rating deviation of the opponent.
-     * @returns The expected outcome for the player (a value between 0 and 1).
-     */
-    calculateExpectedOutcome(playerRating: number, opponentRating: number, opponentRd: number): number {
-        return 1 / (1 + Math.exp(-MathUtils.g(opponentRd) * (playerRating - opponentRating) * this.config.q));
+    * Calculates the expected outcome (E) of a match for the player against an opponent.
+    * Represents the player's expected score (roughly, probability of winning) based on ratings and RDs.
+    * Formula: E = 1 / (1 + 10^(-g(RD_opp)*(r - r_opp)/400))
+    * @param {number} playerRating Player's rating (r).
+    * @param {number} opponentRating Opponent's rating (r_opp).
+    * @param {number} opponentRd Opponent's RD (RD_opp).
+    * @returns {number} Expected outcome for the player (0 to 1).
+    * @private
+    */
+    private calculateExpectedOutcome(playerRating: number, opponentRating: number, opponentRd: number): number {
+        const g_opp = MathUtils.g(opponentRd, this.config.q);
+        const exponent = -g_opp * (playerRating - opponentRating) * this.config.q;
+        return 1 / (1 + Math.exp(exponent));
     }
 
     /**
