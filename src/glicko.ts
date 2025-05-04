@@ -156,7 +156,7 @@ export class Glicko {
      * @throws {Error} If playerRd is not positive.
      * @private
      */
-    sumWeightedScorePerformance(playerRating: number, playerRd: number, matchs: Match[]): number {
+    private sumWeightedScorePerformance(playerRating: number, playerRd: number, matchs: Match[]): number {
         if (playerRd <= 0) { throw new Error("Player RD must be positive for calculations."); }
 
         let sum = 0;

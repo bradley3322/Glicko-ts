@@ -1,6 +1,6 @@
 {
   "name": "glicko-ts",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A TypeScript implementation of the Glicko-1 rating system.",
   "author": "Bradley Robinson",
   "main": "./dist/index.js",
