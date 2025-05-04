@@ -1,6 +1,6 @@
-# GlickoTS
+# Glicko-ts
 
-GlickoTS is a TypeScript implementation of the **Glicko-1** rating system, developed by Mark Glickman. It's a popular algorithm for calculating the relative skill levels of players in competitive games, improving upon simpler systems by incorporating rating reliability. This library provides an easy-to-use interface for integrating Glicko-1 ratings into your applications.
+glicko-ts is a TypeScript implementation of the **Glicko-1** rating system, developed by Mark Glickman. It's a popular algorithm for calculating the relative skill levels of players in competitive games, improving upon simpler systems by incorporating rating reliability. This library provides an easy-to-use interface for integrating Glicko-1 ratings into your applications.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -18,7 +18,7 @@ GlickoTS is a TypeScript implementation of the **Glicko-1** rating system, devel
 Install the package via npm:
 
 ```bash
-npm install glickots
+npm install glicko-ts
 ```
 
 ## `Usage`
