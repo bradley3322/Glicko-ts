@@ -26,7 +26,7 @@ npm install glicko-ts
 Here's a quick example of how to use GlickoTS:
 
 ```typescript
-import { Glicko, Player, Match } from 'glickots'; // Adjust path if necessary
+import { Glicko, Player, Match } from 'glicko-ts'; // Adjust path if necessary
 
 // 1. Initialize the Glicko calculator (using default or custom config)
 const glicko = new Glicko();
@@ -106,8 +106,8 @@ You can customize the Glicko system by passing a configuration object to the Gli
 * `roundingPrecision`: The number of decimal places to round final ratings and RDs to (default: 2). Must be a non-negative integer.
 
 ```typescript
-import { Glicko } from 'glickots'; // Adjust path if necessary
-import { GlickoConfig } from 'glickots'; // Adjust path if necessary
+import { Glicko } from 'glicko-ts'; // Adjust path if necessary
+import { GlickoConfig } from 'glicko-ts'; // Adjust path if necessary
 
 const customConfig: Partial<GlickoConfig> = {
   initialRating: 1000,         // Default: 1500
